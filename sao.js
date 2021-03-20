@@ -160,8 +160,6 @@ module.exports = {
     // - remove config
     // - remove tests
 
-    // TODO: fix `template/package.json` "author" field
-
     if (ctx.answers.pm === 'yarn') {
       ctx.yarnInstall();
     } else {

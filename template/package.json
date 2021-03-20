@@ -1,8 +1,8 @@
 {
-  "name": "lad",
+  "name": "<%= name %>",
   "description": "<%= description %>",
   "version": "0.0.0",
-  "author": "Nick Baugh <niftylettuce@gmail.com> (https://niftylettuce.com)",
+  "author": "<%= author %> <<%= email %>> (<%= website %>)",
   "ava": {
     "verbose": true,
     "failFast": true,
