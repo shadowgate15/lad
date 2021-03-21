@@ -17,15 +17,17 @@ cli
   .command('<name>', 'Generate a new project')
   .action((name) => {
     const folderName = name;
-    const targetPath = path.resolve(folderName);
-    console.log(`> Generating project in ${targetPath}`);
+    const outDir = path.resolve(folderName);
+    console.log(`> Generating project in ${outDir}`);
 
-    const templatePath = path.dirname(require.resolve('./package'));
+    const generator = path.dirname(require.resolve('./package'));
 
-    return sao({
-      template: templatePath,
-      targetPath
-    });
+    sao({ generator, outDir })
+      .run()
+      .catch((error_) => {
+        console.trace(error_);
+        process.exit(1);
+      });
   })
   .example('lad my-new-project');
 

@@ -214,8 +214,7 @@
     }
   },
   "keywords": [
-    "<%= this.slug(name) %>",
-    "lad",
+    "<%= slug(name) %>",
     "lad",
     "lass"
   ],

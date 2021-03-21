@@ -11,59 +11,67 @@ const isValidNpmName = require('is-valid-npm-name');
 const conf = npmConf();
 
 module.exports = {
-  enforceNewFolder: true,
-  templateOptions: {
-    context: {
-      camelcase,
-      uppercamelcase,
-      slug
-    }
+  templateData: {
+    camelcase,
+    uppercamelcase,
+    slug
   },
-  prompts: {
-    name: {
+  prompts: [
+    {
+      name: 'name',
       message: 'What is the name of the new project',
-      default: ':folderName:',
+      default: '{outFolder}',
       validate: (value) => {
-        if (process.env.NODE_ENV === 'test' && value === 'lad') return true;
+        if (process.env.NODE_ENV === 'test' && value === 'lad') {
+          return true;
+        }
+
         return isValidNpmName(value);
       }
     },
-    description: {
+    {
+      name: 'description',
       message: 'How would you describe the new project',
       default: `my ${superb.random()} project`
     },
-    pm: {
+    {
+      name: 'pm',
       message: 'Choose a package manager',
       choices: ['npm', 'yarn'],
       type: 'list',
       default: 'npm',
       store: true
     },
-    author: {
+    {
+      name: 'author',
       message: 'What is your name (the author’s)',
-      default: conf.get('init-author-name') || ':gitUser:',
+      default: conf.get('init-author-name') || '{gitUser.name}',
       store: true
     },
-    email: {
+    {
+      name: 'email',
       message: 'What is your email (the author’s)',
-      default: conf.get('init-author-email') || ':gitEmail:',
+      default: conf.get('init-author-email') || '{gitUser.email}',
       store: true,
       validate: (value) => (isEmail(value) ? true : 'Invalid email')
     },
-    website: {
+    {
+      name: 'website',
       message: 'What is your personal website (the author’s)',
       default: conf.get('init-author-url') || '',
       store: true,
       validate: (value) => (value === '' || isURL(value) ? true : 'Invalid URL')
     },
-    username: {
+    {
+      name: 'username',
       message: 'What is your GitHub username or organization',
-      default: ':gitUser:',
+      default: '{gitUser.username}',
       store: true,
       validate: (value) =>
         githubUsernameRegex.test(value) ? true : 'Invalid GitHub username'
     },
-    repo: {
+    {
+      name: 'repo',
       message: 'What is your GitHub repository’s URL',
       default(answers) {
         return `https://github.com/${slug(answers.username)}/${slug(
@@ -77,95 +85,121 @@ module.exports = {
           ? true
           : 'Please include a valid GitHub.com URL without a trailing slash'
     },
-    web: {
+    {
+      name: 'web',
       message: 'Do you need a web server (@ladjs/web)',
       type: 'confirm',
       default: true
     },
-    api: {
+    {
+      name: 'api',
       message: 'Do you need an API server (@ladjs/api)',
       type: 'confirm',
       default: true
     },
-    bree: {
+    {
+      name: 'bree',
       message: 'Do you need a job scheduler (bree)',
       type: 'confirm',
       default: true
     },
-    proxy: {
+    {
+      name: 'proxy',
       message: 'Do you need a proxy (http => https redirect)',
       type: 'confirm',
       default: true
     },
-    i18n: {
+    {
+      name: 'i18n',
       message: 'Do you need automatic multi-lingual support',
       type: 'confirm',
       default: true,
       when: (answers) => answers.web || answers.api
     }
-  },
-  filters: {
-    // keeping this here as a safety guard per this gh issue
-    // <https://github.com/saojs/sao/issues/59>
-    'node_modules/**': false,
+  ],
+  actions() {
+    const actions = [
+      {
+        type: 'add',
+        files: '**',
+        filters: {
+          // Keeping this here as a safety guard per this gh issue
+          // <https://github.com/saojs/sao/issues/59>
+          'node_modules/**': false,
 
-    // never copy env file
-    '.env': false,
+          // Never copy env file
+          '.env': false,
 
-    // ignore standard dev files
-    'coverage/**': false,
-    'build/**': false,
-    '.nyc_output/**': false,
-    '*.log': false,
+          // ignore standard dev files
+          'coverage/**': false,
+          'build/**': false,
+          '.nyc_output/**': false,
+          '*.log': false,
 
-    'web.js': 'web === true',
-    'api.js': 'api === true',
-    'bree.js': 'bree === true',
-    'proxy.js': 'proxy === true',
-    'jobs/**': 'bree === true',
+          'web.js': 'web === true',
+          'api.js': 'api === true',
+          'bree.js': 'bree === true',
+          'proxy.js': 'proxy === true',
+          'jobs/**': 'bree === true',
 
-    'test/config/snapshots/': false,
-    'test/config/snapshots/**': false,
-    'test/web/snapshots/': false,
-    'test/web/snapshots/**': false
-  },
-  move: {
-    // We keep `.gitignore` as `gitignore` in the project
-    // Because when it's published to npm
-    // `.gitignore` file will be ignored!
-    gitignore: '.gitignore',
-    README: 'README.md',
-    env: '.env'
-  },
-  post: async (ctx) => {
-    ctx.gitInit();
+          'test/config/snapshots/': false,
+          'test/config/snapshots/**': false,
+          'test/web/snapshots/': false,
+          'test/web/snapshots/**': false
+        }
+      },
+      {
+        type: 'move',
+        patterns: {
+          // We keep `.gitignore` as `gitignore` in the project
+          // Because when it's published to npm
+          // `.gitignore` file will be ignored!
+          gitignore: '.gitignore',
+          README: 'README.md',
+          env: '.env'
+        }
+      }
+    ];
 
-    // TODO: ctx.answers.bree
-    // - remove from pkg
-    // - remove config
-    // - remove tests
+    // TODO: this.answers.bree
+    if (this.answers.bree) {
+      // - remove from pkg
+      actions.push({
+        type: 'modify',
+        files: 'package.json',
+        handler(data, _) {
+          delete data.dependencies.bree;
 
-    // TODO: ctx.answers.web
-    // - remove from pkg
-    // - remove config
-    // - remove tests
+          return data;
+        }
+      });
 
-    // TODO: ctx.answers.i18n
-    // - remove from pkg
-    // - remove config
-    // - remove tests
-
-    // TODO: ctx.answers.api
-    // - remove from pkg
-    // - remove config
-    // - remove tests
-
-    if (ctx.answers.pm === 'yarn') {
-      ctx.yarnInstall();
-    } else {
-      ctx.npmInstall();
+      // - remove config
+      // - remove tests
     }
 
-    ctx.showTip();
+    // TODO: this.answers.web
+    // - remove from pkg
+    // - remove config
+    // - remove tests
+
+    // TODO: this.answers.i18n
+    // - remove from pkg
+    // - remove config
+    // - remove tests
+
+    // TODO: this.answers.api
+    // - remove from pkg
+    // - remove config
+    // - remove tests
+
+    return actions;
+  },
+  async completed() {
+    this.gitInit();
+
+    await this.npmInstall({ npmClient: this.answers.pm });
+
+    this.showProjectTips();
   }
 };
