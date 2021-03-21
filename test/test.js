@@ -96,4 +96,7 @@ test('no bree', async (t) => {
   // Bree is removed from package.json
   const pkg = await stream.readFile('package.json');
   t.false(pkg.includes('bree'));
+
+  // bree configs are removed
+  t.false(stream.fileList.includes('config/bree.js'));
 });

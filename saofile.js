@@ -175,7 +175,14 @@ module.exports = {
       });
 
       // - remove config
+      actions.push({
+        type: 'remove',
+        files: 'config/bree.js'
+      });
+
+      // - remove envs
       // - remove tests
+      // - remove ansible
     }
 
     // TODO: this.answers.web
